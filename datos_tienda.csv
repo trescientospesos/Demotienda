@@ -1,0 +1,10 @@
+Tienda_Nombre,Tienda_Descripcion,Tienda_Telefono,Tienda_Prefijo,Tienda_Moneda,Tienda_Color_1,Tienda_Color_2,Tienda_Color_Acento,Prod_Categoria,Prod_Nombre,Prod_Descripcion,Prod_Precio,Prod_Imagen_Principal,Prod_Var1_Nombre,Prod_Var1_Valores,Prod_Var1_Imagenes,Prod_Var2_Nombre,Prod_Var2_Valores,Prod_Var2_Imagenes
+Boutique V2,Catálogo Exclusivo,1234567890,1,$,#6366f1,#4f46e5,#ec4899,Moda Verano,Camiseta Premium Blanca,"Algodón 100%, corte moderno y fresco.",25.00,camiseta.jpg,Talla,"S,M,L,XL",,Estilo,"Cuello V,Cuello Redondo","cami_v.jpg,cami_redondo.jpg"
+,,,,,,,,Urbano,Zapatillas Urbanas,"Diseño ergonómico ideal para caminar todo el día.",55.50,zapatillas.jpg,Talla EU,"38,39,40,41,42,43,44",,Color,"Negro,Blanco,Gris","zap_negro.jpg,zap_blanco.jpg,zap_gris.jpg"
+,,,,,,,,Headwear,Gorra Clásica,"Ajustable, visera curva, varios colores.",15.00,gorra.jpg,Color,"Negro,Azul Navy,Beige,Rojo","gorra_negra.jpg,gorra_azul.jpg,gorra_beige.jpg,gorra_roja.jpg",,,
+,,,,,,,,Viajes,Mochila de Viaje,Impermeable con compartimento para laptop.,45.00,mochila.jpg,Color,"Gris Pizarra,Negro Mate","mochila_gris.jpg,mochila_negra.jpg",,,,
+,,,,,,,,Joyería,Reloj Minimalista,Correa de cuero genuino y maquinaria de cuarzo.,89.99,reloj.jpg,Correa,"Cuero Marrón,Cuero Negro,Metal Plateado","reloj_marron.jpg,reloj_negro.jpg,reloj_metal.jpg",,,,
+,,,,,,,,Verano,Gafas de Sol,"Protección UV400, marco ligero.",30.00,gafas.jpg,Lente,"Polarizado Oscuro,Espejo Azul,Degradado Marrón","gafas_oscuro.jpg,gafas_azul.jpg,gafas_marron.jpg",,,,
+,,,,,,,,Tech Audio,Auriculares Bluetooth,Sonido HD con cancelación de ruido pasiva.,35.00,auriculares.jpg,Acabado,"Negro Mate,Blanco Perla","auriculares_negro.jpg,auriculares_blanco.jpg",,,,
+,,,,,,,,Eco Living,Botella Térmica,Mantiene bebidas frías por 24h y calientes por 12h.,18.50,botella.jpg,Capacidad,"500ml,750ml,1L",,Color,"Acero,Negro,Azul Eléctrico","botella_acero.jpg,botella_negra.jpg,botella_azul.jpg"
+,,,,,,,,Tech Accesorios,Funda para Laptop,"Acolchada, resistente al agua, para 13-15 pulgadas.",22.00,funda.jpg,Tamaño,"13 Pulgadas,15 Pulgadas,17 Pulgadas",,Color,"Gris Claro,Gris Oscuro","funda_claro.jpg,funda_oscuro.jpg"
