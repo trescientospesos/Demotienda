@@ -1,0 +1,25 @@
+Tienda_Nombre,Tienda_Descripcion,Tienda_Telefono,Tienda_Prefijo,Tienda_Moneda,Tienda_Color_1,Tienda_Color_2,Prod_Categoria,Prod_Nombre,Prod_Descripcion,Prod_Precio,Prod_Variantes,Prod_Imagen
+Mi Tienda Pro,Envíos a todo el país en 24h,1234567890,52,MXN,#2563eb,#1e40af,Ropa,Camiseta Básica Premium,Algodón 100% orgánico de tacto suave.,350.00,Color:Blanco=camisa_blanca.jpg,Negro=camisa_negra.jpg,Azul=camisa_azul.jpg|Talla:S,M,L,XL,camisa_blanca.jpg
+,,,,,,,Ropa,Jeans Slim Fit,Mezclilla elástica y resistente.,890.00,Color:Azul Claro=jeans_claro.jpg,Azul Oscuro=jeans_oscuro.jpg|Talla:28,30,32,34,jeans_claro.jpg
+,,,,,,,Ropa,Sudadera con Capucha,Ideal para clima fresco. Interior afelpado.,650.00,Color:Gris=sudadera_gris.jpg,Rojo=sudadera_roja.jpg|Talla:S,M,L,XL,sudadera_gris.jpg
+,,,,,,,Ropa,Chaqueta de Cuero,Estilo motociclista cuero sintético.,1200.00,Talla:S,M,L,XL,chaqueta_cuero.jpg
+,,,,,,,Ropa,Vestido de Verano,Tela ligera y transpirable con estampado floral.,780.00,Color:Rosa=vestido_rosa.jpg,Amarillo=vestido_amarillo.jpg|Talla:XS,S,M,L,vestido_rosa.jpg
+,,,,,,,Ropa,Pack Calcetines x3,Calcetines deportivos transpirables.,150.00,Color:Blanco,Negro,Mixto,calcetines.jpg
+,,,,,,,Calzado,Zapatillas Running Pro,Suela de impacto cero para corredores.,1450.00,Color:Neón=running_neon.jpg,Negro=running_negro.jpg|Talla:25,26,27,28,29,running_neon.jpg
+,,,,,,,Calzado,Botas de Montaña,Resistentes al agua y suela antideslizante.,2100.00,Color:Café=bota_cafe.jpg,Negro=bota_negra.jpg|Talla:26,27,28,29,bota_cafe.jpg
+,,,,,,,Calzado,Mocasines Formales,Elegancia y comodidad para la oficina.,1100.00,Color:Negro,Café|Talla:25,26,27,28,29,mocasines.jpg
+,,,,,,,Calzado,Sandalias Playeras,Goma resistente y diseño ergonómico.,350.00,Color:Azul,Verde,Rojo|Talla:24,25,26,27,sandalias.jpg
+,,,,,,,Calzado,Sneakers Urbanos,Estilo casual para el día a día.,950.00,Color:Blanco=sneaker_white.jpg,Negro=sneaker_black.jpg|Talla:24,25,26,27,28,sneaker_white.jpg
+,,,,,,,Calzado,Pantuflas Descanso,Interior de lana suave.,400.00,Talla:S (23-25),M (26-28),L (29-31),pantuflas.jpg
+,,,,,,,Electrónica,Auriculares Bluetooth,Cancelación de ruido activa y 20h batería.,1296.00,Color:Negro=audifono_negro.png,Blanco=audifono_blanco.png,audifonos_main.jpg
+,,,,,,,Electrónica,Smartwatch Series 5,Resistente al agua IP68 y monitor cardíaco.,899.50,Correa:Sport Negra=watch_negro.jpg,Cuero Café=watch_cafe.jpg,Rosa=watch_rosa.jpg,watch_negro.jpg
+,,,,,,,Electrónica,Funda para iPhone,Silicona de alta protección contra caídas.,250.00,Modelo:iPhone 13,iPhone 14,iPhone 15|Color:Rojo,Negro,Azul,Transparente,funda_iphone.jpg
+,,,,,,,Electrónica,Cargador Rápido 20W,Carga tu dispositivo al 50% en 30 min.,350.00,Tipo:USB-C,Lightning,cargador.jpg
+,,,,,,,Electrónica,Altavoz Portátil,Sonido 360 grados resistente al agua.,750.00,Color:Negro,Azul,Rojo,altavoz.jpg
+,,,,,,,Electrónica,Powerbank 10000mAh,Batería externa compacta.,450.00,Color:Blanco,Negro,powerbank.jpg
+,,,,,,,Accesorios,Gafas de Sol Aviador,Protección UV400 y marco metálico.,550.00,Lente:Negro=lente_negro.jpg,Espejo=lente_espejo.jpg,gafas.jpg
+,,,,,,,Accesorios,Reloj Clásico Analógico,Maquinaria japonesa de precisión.,1800.00,Correa:Cuero,Metal,reloj_clasico.jpg
+,,,,,,,Accesorios,Mochila Antirrobo,Cierres ocultos y puerto USB integrado.,650.00,Color:Gris,Negro,Azul Marino,mochila.jpg
+,,,,,,,Accesorios,Cinturón de Cuero,Hebilla metálica resistente.,300.00,Color:Negro,Café|Talla:30,32,34,36,cinturon.jpg
+,,,,,,,Accesorios,Gorra Deportiva,Tela transpirable dry-fit.,250.00,Color:Negro,Blanco,Azul,gorra.jpg
+,,,,,,,Accesorios,Cartera Billetera,Bloqueo RFID para seguridad de tarjetas.,400.00,Color:Negro,Café,cartera.jpg
