@@ -142,6 +142,17 @@
     </div>
 
     <script>
+        // ***************************************************************
+        // CONFIGURACIÓN DE DATOS (IMPORTANTE)
+        // ***************************************************************
+        // Si quieres usar Google Sheets:
+        // 1. Ve a tu Google Sheet -> Archivo -> Compartir -> Publicar en la web
+        // 2. Selecciona "Valores separados por comas (.csv)" en el desplegable
+        // 3. Pega el enlace que te da Google dentro de las comillas de abajo.
+        // ***************************************************************
+        const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1KozzCGxqXqH94c8y8KofJfhgMZZ-FvuNxKpC8M00VVg/edit?usp=sharing"; 
+        // ***************************************************************
+
         // Configuración y Estado
         let STORE_DATA = {};
         let PRODUCTS = [];
@@ -162,7 +173,10 @@
 
         // Iniciar
         window.addEventListener('DOMContentLoaded', () => {
-            Papa.parse('datos_tienda.csv', {
+            // Usa la URL de Google Sheets si existe, si no, usa el archivo local
+            const csvSource = GOOGLE_SHEET_URL || 'datos_tienda.csv';
+
+            Papa.parse(csvSource, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
