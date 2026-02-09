@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cargando Tienda...</title>
+    
+    <!-- Librerías: Tailwind, PapaParse, Toastify, Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Configuración Dinámica de Estilos -->
+    <style id="dynamic-styles">
+        :root { --primary: #2563eb; --secondary: #1e293b; --accent: #f59e0b; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .text-primary { color: var(--primary); }
+        .bg-primary { background-color: var(--primary); }
+        .border-primary { border-color: var(--primary); }
+        
+        /* Utilidades */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .product-card-img { height: 180px; width: 100%; object-fit: cover; }
+        
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Loader */
+        .loader-container { position: fixed; inset: 0; z-index: 100; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- PANTALLA DE CARGA -->
+    <div id="loader" class="loader-container">
+        <div class="spinner"></div>
+        <p class="mt-4 font-bold text-slate-400 text-sm tracking-widest animate-pulse">SINCRONIZANDO...</p>
+    </div>
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="hidden min-h-screen pb-24">
+        
+        <!-- HEADER -->
+        <header class="sticky top-0 z-40 glass border-b border-slate-200 shadow-sm transition-all duration-300" id="main-header">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <!-- Logo placeholder -->
+                    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg">
+                        <span id="logo-letter">T</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 id="store-name" class="font-bold text-lg leading-tight truncate">Cargando...</h1>
+                        <span id="store-status" class="text-[10px] uppercase font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full w-fit">Abierto</span>
+                    </div>
+                </div>
+                
+                <!-- Buscador y Carrito -->
+                <div class="flex gap-2">
+                    <button onclick="toggleSearch()" class="p-2.5 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                    <button onclick="openCart()" class="relative p-2.5 bg-primary text-white rounded-xl shadow-lg hover:brightness-110 transition active:scale-95">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white transform scale-0 transition-transform">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Búsqueda (Oculta) -->
+            <div id="search-bar" class="hidden px-4 pb-3 animate-in slide-in-from-top-2">
+                <input type="text" id="search-input" onkeyup="filterProducts()" placeholder="¿Qué se te antoja hoy?" class="w-full bg-slate-100 border-0 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 text-sm">
+            </div>
+
+            <!-- Categorías -->
+            <nav class="px-4 pb-0 overflow-x-auto no-scrollbar flex gap-3 border-t border-slate-100 pt-3" id="category-list"></nav>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="max-w-6xl mx-auto px-4 py-6">
+            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+            
+            <!-- Estado vacío -->
+            <div id="empty-state" class="hidden text-center py-20">
+                <div class="text-4xl mb-4">🔍</div>
+                <h3 class="font-bold text-slate-800">No encontramos productos</h3>
+                <p class="text-slate-400 text-sm">Intenta con otra búsqueda</p>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL PRODUCTO (Detalles y Opciones) -->
+    <div id="product-modal" class="fixed inset-0 z-50 hidden bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+            
+            <!-- Imagen Modal -->
+            <div class="relative h-56 sm:h-64 flex-shrink-0 group">
+                <img id="modal-img" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <button onclick="closeModal()" class="absolute top-4 right-4 bg-black/30 text-white p-2 rounded-full backdrop-blur hover:bg-black/50 transition">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="absolute bottom-4 left-4 right-4">
+                    <h2 id="modal-title" class="text-2xl font-bold text-white leading-tight mb-1"></h2>
+                    <p id="modal-desc" class="text-white/90 text-sm line-clamp-2"></p>
+                </div>
+            </div>
+
+            <!-- Opciones (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-white" id="modal-content">
+                
+                <!-- 1. Variantes (Radio) -->
+                <div id="variants-section" class="hidden">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">Elige una opción (Requerido)</label>
+                    <div id="variants-list" class="space-y-2"></div>
+                </div>
+
+                <!-- 2. Extras (Checkbox) -->
+                <div id="extras-section" class="hidden">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">Agrega Extras</label>
+                    <div id="extras-list" class="space-y-2"></div>
+                </div>
+
+                <!-- 3. Sin (Checkbox) -->
+                <div id="removals-section" class="hidden">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">¿Quitar ingredientes?</label>
+                    <div id="removals-list" class="grid grid-cols-2 gap-2"></div>
+                </div>
+
+                <!-- Notas -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Notas especiales</label>
+                    <textarea id="modal-notes" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/50 outline-none resize-none" rows="2" placeholder="Ej: Salsa aparte, bien cocido..."></textarea>
+                </div>
+            </div>
+
+            <!-- Footer Modal (Precio y Agregar) -->
+            <div class="p-4 bg-white border-t border-slate-100 flex items-center gap-4 flex-shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+                <div class="flex items-center bg-slate-100 rounded-xl p-1">
+                    <button onclick="updateModalQty(-1)" class="w-10 h-10 flex items-center justify-center font-bold text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition">-</button>
+                    <span id="modal-qty" class="w-8 text-center font-bold text-lg">1</span>
+                    <button onclick="updateModalQty(1)" class="w-10 h-10 flex items-center justify-center font-bold text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition">+</button>
+                </div>
+                <button onclick="addToCart()" class="flex-1 bg-primary hover:bg-blue-600 text-white h-12 rounded-xl font-bold shadow-lg shadow-primary/30 flex items-center justify-between px-6 transition active:scale-95">
+                    <span>Agregar</span>
+                    <span id="modal-total-btn"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARRITO (Slide-over) -->
+    <div id="cart-sidebar" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeCart()"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cart-panel">
+            
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white z-10">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    Tu Pedido <span id="cart-count-header" class="bg-primary text-white text-xs px-2 py-0.5 rounded-full">0</span>
+                </h2>
+                <button onclick="closeCart()" class="p-2 bg-slate-50 text-slate-400 rounded-full hover:bg-slate-100 hover:text-red-500 transition">✕</button>
+            </div>
+
+            <div id="cart-items" class="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50">
+                <!-- Items se inyectan aquí -->
+                <div class="text-center py-20 text-slate-400 flex flex-col items-center">
+                    <div class="text-6xl mb-4 opacity-20">🛒</div>
+                    <p>Tu carrito está vacío</p>
+                    <button onclick="closeCart()" class="mt-4 text-primary font-bold text-sm hover:underline">Ver menú</button>
+                </div>
+            </div>
+
+            <!-- Checkout Form -->
+            <div class="p-6 bg-white border-t border-slate-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-10">
+                
+                <div class="flex gap-2 mb-4 bg-slate-100 p-1 rounded-xl">
+                    <button onclick="setDeliveryMode('delivery')" id="btn-delivery" class="flex-1 py-2 rounded-lg text-xs font-bold text-center transition bg-white shadow-sm text-primary">🛵 A Domicilio</button>
+                    <button onclick="setDeliveryMode('pickup')" id="btn-pickup" class="flex-1 py-2 rounded-lg text-xs font-bold text-center transition text-slate-500">🥡 Para Llevar</button>
+                </div>
+
+                <div class="space-y-3 mb-4">
+                    <input type="text" id="cust-name" placeholder="Tu Nombre" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 outline-none">
+                    <input type="text" id="cust-address" placeholder="Dirección completa" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 outline-none">
+                </div>
+
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-sm font-bold text-slate-400">Total</span>
+                    <span id="cart-total" class="text-3xl font-black text-slate-900 tracking-tight">$0.00</span>
+                </div>
+
+                <button onclick="sendOrder()" class="w-full bg-green-500 hover:bg-green-600 text-white h-14 rounded-2xl font-bold text-lg shadow-xl shadow-green-500/30 flex items-center justify-center gap-2 transition transform active:scale-[0.98]">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    Pedir por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        //  ⬇️ PEGA AQUÍ TU ENLACE DE GOOGLE SHEETS ⬇️
+        // ==========================================
+        
+        const GOOGLE_SHEET_LINK = 'PON_AQUI_TU_ENLACE_DE_GOOGLE_SHEETS'; 
+
+        // ==========================================
+
+        let state = {
+            config: { name: "", phone: "", prefix: "52", currency: "MXN", color: "#2563eb" },
+            products: [],
+            categories: [],
+            cart: [],
+            deliveryMode: 'delivery',
+            activeCategory: 'Todos',
+            currentItem: null,
+            currentQty: 1,
+            selectedVariant: null
+        };
+
+        // --- INICIO ---
+        window.onload = async () => {
+            if (GOOGLE_SHEET_LINK === 'PON_AQUI_TU_ENLACE_DE_GOOGLE_SHEETS' || !GOOGLE_SHEET_LINK) {
+                alert("⚠️ CONFIGURACIÓN INCOMPLETA:\nPor favor edita el archivo index.html y coloca el enlace de tu Google Sheet.");
+                return;
+            }
+            await loadData();
+        };
+
+        async function loadData() {
+            const id = GOOGLE_SHEET_LINK.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1] || GOOGLE_SHEET_LINK;
+            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`;
+
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                parseData(text);
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando datos. Verifica que la hoja esté publicada como CSV.");
+            }
+        }
+
+        function parseData(csv) {
+            Papa.parse(csv, { header: true, skipEmptyLines: true, complete: (res) => {
+                const data = res.data;
+                if (!data.length) return;
+
+                // 1. Configuración (Fila 1)
+                const cfg = data[0];
+                state.config = {
+                    name: cfg['Tienda_Nombre'] || "Mi Tienda",
+                    phone: cfg['Tienda_Telefono'] || "",
+                    prefix: cfg['Tienda_Prefijo'] || "52",
+                    currency: cfg['Tienda_Moneda'] || "MXN",
+                    color: cfg['Tienda_Color_1'] || "#2563eb"
+                };
+
+                // Aplicar estilos
+                document.documentElement.style.setProperty('--primary', state.config.color);
+                document.getElementById('store-name').textContent = state.config.name;
+                document.getElementById('logo-letter').textContent = state.config.name.charAt(0);
+                document.title = state.config.name;
+
+                // 2. Productos
+                const cats = new Set(['Todos']);
+                state.products = data.map(r => {
+                    if (!r['Prod_Nombre']) return null;
+                    cats.add(r['Prod_Categoria']);
+                    
+                    // Helpers para parsing
+                    const clean = (s) => s ? s.split(',').map(x=>x.trim()).filter(x=>x) : [];
+                    const parsePriceItems = (str) => clean(str).map(item => {
+                        const [name, price] = item.split(':');
+                        return { name: name.trim(), price: parseFloat(price) || 0 };
+                    });
+
+                    // Imagen
+                    let img = r['Prod_Imagen'] ? r['Prod_Imagen'].trim() : '';
+                    if (img && !img.startsWith('http')) img = 'images/' + img;
+
+                    return {
+                        id: Math.random().toString(36).substr(2, 9),
+                        name: r['Prod_Nombre'],
+                        desc: r['Prod_Descripcion'],
+                        price: parseFloat(r['Prod_Precio']) || 0,
+                        category: r['Prod_Categoria'],
+                        image: img,
+                        variants: parsePriceItems(r['Prod_Variantes']), // [{name:'G', price:100}]
+                        extras: parsePriceItems(r['Prod_Extras']),     // [{name:'Queso', price:10}]
+                        removals: clean(r['Prod_Sin'])                 // ['Cebolla', 'Tomate']
+                    };
+                }).filter(p => p);
+
+                state.categories = Array.from(cats);
+                renderApp();
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+            }});
+        }
+
+        // --- RENDERIZADO ---
+        function renderApp() {
+            renderCategories();
+            renderProducts();
+        }
+
+        function renderCategories() {
+            const nav = document.getElementById('category-list');
+            nav.innerHTML = state.categories.map(cat => `
+                <button onclick="filterCategory('${cat}')" 
+                    class="whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all border 
+                    ${state.activeCategory === cat 
+                        ? 'bg-primary text-white border-transparent shadow-md' 
+                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function renderProducts(filterText = '') {
+            const grid = document.getElementById('products-grid');
+            let filtered = state.products;
+
+            // Filtro por categoría
+            if (state.activeCategory !== 'Todos') {
+                filtered = filtered.filter(p => p.category === state.activeCategory);
+            }
+
+            // Filtro por buscador
+            if (filterText) {
+                const term = filterText.toLowerCase();
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(term) || p.desc.toLowerCase().includes(term));
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('empty-state').classList.add('hidden');
+            grid.innerHTML = filtered.map(p => {
+                // Precio a mostrar: El base o el de la variante más barata
+                const displayPrice = p.variants.length > 0 
+                    ? Math.min(...p.variants.map(v => v.price)) 
+                    : p.price;
+                
+                return `
+                <div onclick="openProduct('${p.id}')" class="bg-white rounded-3xl p-3 shadow-sm border border-slate-100 hover:shadow-xl transition-all cursor-pointer group animate-fade-in">
+                    <div class="relative overflow-hidden rounded-2xl mb-3">
+                        <img src="${p.image || 'https://via.placeholder.com/400x300'}" 
+                             class="product-card-img group-hover:scale-105 transition duration-500"
+                             onerror="this.src='https://via.placeholder.com/400x300?text=Sin+Imagen'">
+                        <div class="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
+                            ${p.variants.length ? 'Desde ' : ''}${formatMoney(displayPrice)}
+                        </div>
+                    </div>
+                    <div class="px-1">
+                        <h3 class="font-bold text-slate-900 leading-tight mb-1">${p.name}</h3>
+                        <p class="text-xs text-slate-400 line-clamp-2">${p.desc || ''}</p>
+                    </div>
+                    <button class="w-full mt-4 py-2 bg-slate-50 text-primary font-bold text-xs rounded-xl hover:bg-primary hover:text-white transition">
+                        Agregar +
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // --- LÓGICA DEL MODAL ---
+        function openProduct(id) {
+            const p = state.products.find(x => x.id === id);
+            if (!p) return;
+
+            state.currentItem = p;
+            state.currentQty = 1;
+            state.selectedVariant = p.variants.length > 0 ? p.variants[0] : null;
+
+            // UI Elements
+            document.getElementById('modal-title').textContent = p.name;
+            document.getElementById('modal-desc').textContent = p.desc;
+            document.getElementById('modal-img').src = p.image || 'https://via.placeholder.com/400';
+            document.getElementById('modal-img').onerror = function(){this.src='https://via.placeholder.com/400'};
+            document.getElementById('modal-notes').value = '';
+
+            // 1. Variantes
+            const varSec = document.getElementById('variants-section');
+            const varList = document.getElementById('variants-list');
+            if (p.variants.length) {
+                varSec.classList.remove('hidden');
+                varList.innerHTML = p.variants.map((v, idx) => `
+                    <label class="flex items-center justify-between p-3 border-2 rounded-xl cursor-pointer transition-all ${idx===0 ? 'border-primary bg-blue-50' : 'border-slate-100'}" id="var-label-${idx}">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="variant" value="${idx}" ${idx===0 ? 'checked' : ''} onchange="selectVariant(${idx})" class="w-4 h-4 text-primary focus:ring-primary">
+                            <span class="font-bold text-sm text-slate-700">${v.name}</span>
+                        </div>
+                        <span class="font-bold text-sm text-primary">${formatMoney(v.price)}</span>
+                    </label>
+                `).join('');
+            } else {
+                varSec.classList.add('hidden');
+            }
+
+            // 2. Extras
+            const extSec = document.getElementById('extras-section');
+            const extList = document.getElementById('extras-list');
+            if (p.extras.length) {
+                extSec.classList.remove('hidden');
+                extList.innerHTML = p.extras.map((e, idx) => `
+                    <label class="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="extra-chk w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary" value="${idx}" onchange="calculateModalTotal()">
+                            <span class="text-sm font-medium text-slate-600">${e.name}</span>
+                        </div>
+                        <span class="text-xs font-bold text-slate-400">+${formatMoney(e.price)}</span>
+                    </label>
+                `).join('');
+            } else {
+                extSec.classList.add('hidden');
+            }
+
+            // 3. Removals
+            const remSec = document.getElementById('removals-section');
+            const remList = document.getElementById('removals-list');
+            if (p.removals.length) {
+                remSec.classList.remove('hidden');
+                remList.innerHTML = p.removals.map((r, idx) => `
+                    <label class="flex items-center gap-2 p-2 bg-red-50 rounded-lg cursor-pointer border border-transparent hover:border-red-200">
+                        <input type="checkbox" class="rem-chk w-4 h-4 text-red-500 rounded border-red-200 focus:ring-red-500" value="${idx}">
+                        <span class="text-xs font-bold text-red-500">Sin ${r}</span>
+                    </label>
+                `).join('');
+            } else {
+                remSec.classList.add('hidden');
+            }
+
+            updateModalQty(0);
+            document.getElementById('product-modal').classList.remove('hidden');
+            document.getElementById('product-modal').classList.add('flex');
+        }
+
+        function selectVariant(idx) {
+            state.selectedVariant = state.currentItem.variants[idx];
+            // Visual Update
+            document.querySelectorAll('#variants-list label').forEach((el, i) => {
+                if(i === idx) el.className = "flex items-center justify-between p-3 border-2 rounded-xl cursor-pointer transition-all border-primary bg-blue-50";
+                else el.className = "flex items-center justify-between p-3 border-2 rounded-xl cursor-pointer transition-all border-slate-100";
+            });
+            calculateModalTotal();
+        }
+
+        function updateModalQty(change) {
+            state.currentQty = Math.max(1, state.currentQty + change);
+            document.getElementById('modal-qty').textContent = state.currentQty;
+            calculateModalTotal();
+        }
+
+        function calculateModalTotal() {
+            let price = state.selectedVariant ? state.selectedVariant.price : state.currentItem.price;
+            
+            // Sumar extras
+            document.querySelectorAll('.extra-chk:checked').forEach(chk => {
+                price += state.currentItem.extras[chk.value].price;
+            });
+
+            const total = price * state.currentQty;
+            document.getElementById('modal-total-btn').textContent = formatMoney(total);
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+            document.getElementById('product-modal').classList.remove('flex');
+        }
+
+        function addToCart() {
+            const p = state.currentItem;
+            let finalPrice = state.selectedVariant ? state.selectedVariant.price : p.price;
+            let selectedExtras = [];
+            let selectedRemovals = [];
+
+            // Extras
+            document.querySelectorAll('.extra-chk:checked').forEach(chk => {
+                const e = p.extras[chk.value];
+                selectedExtras.push(e);
+                finalPrice += e.price;
+            });
+
+            // Removals
+            document.querySelectorAll('.rem-chk:checked').forEach(chk => {
+                selectedRemovals.push(p.removals[chk.value]);
+            });
+
+            const cartItem = {
+                id: Date.now(), // Unique ID for cart item
+                productId: p.id,
+                name: p.name,
+                variant: state.selectedVariant ? state.selectedVariant.name : null,
+                price: finalPrice,
+                qty: state.currentQty,
+                extras: selectedExtras,
+                removals: selectedRemovals,
+                notes: document.getElementById('modal-notes').value.trim()
+            };
+
+            state.cart.push(cartItem);
+            updateCartUI();
+            closeModal();
+            showToast(`✅ ${p.name} agregado al carrito`);
+        }
+
+        // --- CARRITO ---
+        function updateCartUI() {
+            const count = state.cart.reduce((acc, item) => acc + item.qty, 0);
+            document.getElementById('cart-count').textContent = count;
+            document.getElementById('cart-count').classList.remove('scale-0');
+            document.getElementById('cart-count-header').textContent = count;
+            
+            // Render Items
+            const list = document.getElementById('cart-items');
+            if (state.cart.length === 0) {
+                list.innerHTML = `<div class="text-center py-20 text-slate-400 flex flex-col items-center"><div class="text-6xl mb-4 opacity-20">🛒</div><p>Tu carrito está vacío</p></div>`;
+            } else {
+                let total = 0;
+                list.innerHTML = state.cart.map(item => {
+                    total += item.price * item.qty;
+                    return `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 relative">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-bold text-primary mr-2">${item.qty}x</span>
+                                <span class="font-bold text-slate-800">${item.name}</span>
+                            </div>
+                            <span class="font-bold text-slate-900">${formatMoney(item.price * item.qty)}</span>
+                        </div>
+                        
+                        <div class="text-xs text-slate-500 space-y-1 pl-6">
+                            ${item.variant ? `<p class="font-semibold text-slate-700">Opcion: ${item.variant}</p>` : ''}
+                            ${item.extras.map(e => `<p class="text-blue-600">+ ${e.name}</p>`).join('')}
+                            ${item.removals.map(r => `<p class="text-red-500 decoration-line-through">Sin ${r}</p>`).join('')}
+                            ${item.notes ? `<p class="italic text-slate-400">" ${item.notes} "</p>` : ''}
+                        </div>
+
+                        <button onclick="removeCartItem(${item.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 p-1">✕</button>
+                    </div>
+                    `;
+                }).join('');
+                document.getElementById('cart-total').textContent = formatMoney(total);
+            }
+        }
+
+        function removeCartItem(id) {
+            state.cart = state.cart.filter(i => i.id !== id);
+            updateCartUI();
+        }
+
+        function openCart() {
+            document.getElementById('cart-sidebar').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('cart-panel').classList.remove('translate-x-full');
+            }, 10);
+        }
+
+        function closeCart() {
+            document.getElementById('cart-panel').classList.add('translate-x-full');
+            setTimeout(() => {
+                document.getElementById('cart-sidebar').classList.add('hidden');
+            }, 300);
+        }
+
+        function setDeliveryMode(mode) {
+            state.deliveryMode = mode;
+            const btnD = document.getElementById('btn-delivery');
+            const btnP = document.getElementById('btn-pickup');
+            const addrInput = document.getElementById('cust-address');
+
+            if(mode === 'delivery') {
+                btnD.className = "flex-1 py-2 rounded-lg text-xs font-bold text-center transition bg-white shadow-sm text-primary border border-primary/20";
+                btnP.className = "flex-1 py-2 rounded-lg text-xs font-bold text-center transition text-slate-500 hover:bg-slate-50";
+                addrInput.style.display = 'block';
+            } else {
+                btnP.className = "flex-1 py-2 rounded-lg text-xs font-bold text-center transition bg-white shadow-sm text-primary border border-primary/20";
+                btnD.className = "flex-1 py-2 rounded-lg text-xs font-bold text-center transition text-slate-500 hover:bg-slate-50";
+                addrInput.style.display = 'none';
+            }
+        }
+
+        function sendOrder() {
+            if (state.cart.length === 0) return showToast("❌ El carrito está vacío");
+            
+            const name = document.getElementById('cust-name').value.trim();
+            const address = document.getElementById('cust-address').value.trim();
+            
+            if (!name) return showToast("⚠️ Por favor escribe tu nombre");
+            if (state.deliveryMode === 'delivery' && !address) return showToast("⚠️ Faltan datos de dirección");
+
+            let msg = `👋 *NUEVO PEDIDO - ${state.config.name}*\n`;
+            msg += `👤 Cliente: *${name}*\n`;
+            msg += `🛵 Tipo: *${state.deliveryMode === 'delivery' ? 'A Domicilio' : 'Para Llevar'}*\n`;
+            if (state.deliveryMode === 'delivery') msg += `📍 Dirección: ${address}\n`;
+            msg += `--------------------------------\n`;
+
+            let total = 0;
+            state.cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                msg += `📝 *${item.qty}x ${item.name}*\n`;
+                if(item.variant) msg += `   ↳ Opción: ${item.variant}\n`;
+                item.extras.forEach(e => msg += `   + ${e.name}\n`);
+                item.removals.forEach(r => msg += `   🚫 Sin ${r}\n`);
+                if(item.notes) msg += `   💬 Nota: ${item.notes}\n`;
+                msg += `   💲 Subtotal: ${formatMoney(sub)}\n\n`;
+            });
+
+            msg += `--------------------------------\n`;
+            msg += `💰 *TOTAL FINAL: ${formatMoney(total)}*`;
+
+            const phone = state.config.prefix + state.config.phone;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // --- UTILS ---
+        function filterCategory(cat) {
+            state.activeCategory = cat;
+            renderCategories();
+            renderProducts(document.getElementById('search-input').value);
+        }
+
+        function toggleSearch() {
+            const bar = document.getElementById('search-bar');
+            bar.classList.toggle('hidden');
+            if(!bar.classList.contains('hidden')) document.getElementById('search-input').focus();
+        }
+
+        function filterProducts() {
+            const val = document.getElementById('search-input').value;
+            renderProducts(val);
+        }
+
+        function formatMoney(amount) {
+            return '$' + amount.toLocaleString('es-MX', {minimumFractionDigits: 2});
+        }
+
+        function showToast(text) {
+            Toastify({
+                text: text,
+                duration: 3000,
+                gravity: "bottom", 
+                position: "center", 
+                style: { background: "#1e293b", borderRadius: "10px", fontSize: "14px" }
+            }).showToast();
+        }
+
+        // Inicializar Delivery Mode por defecto
+        setDeliveryMode('delivery');
+
+    </script>
+</body>
+</html>
