@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        /* Estilos base y la fuente del precio */
+        /* Estilos base */
         :root {
             --primary-color: #2563eb;
             --secondary-color: #1e40af;
@@ -23,9 +23,8 @@
             background-color: #f3f4f6;
         }
 
-        /* Formato de precio exacto de la imagen */
         .precio-custom {
-            color: #2c5282; /* Azul similar a la imagen */
+            color: #2c5282;
             font-weight: 500;
             font-size: 1.1rem;
             letter-spacing: 0.02em;
@@ -56,7 +55,6 @@
         
         .text-primary { color: var(--primary-color); }
         .bg-primary { background-color: var(--primary-color); }
-        .border-primary { border-color: var(--primary-color); }
     </style>
 </head>
 <body>
@@ -81,16 +79,12 @@
             </div>
         </div>
         <!-- Categorías -->
-        <div class="bg-gray-50 overflow-x-auto whitespace-nowrap border-t border-gray-200 py-2 px-4" id="category-container">
-            <!-- Botones de categoría insertados dinámicamente -->
-        </div>
+        <div class="bg-gray-50 overflow-x-auto whitespace-nowrap border-t border-gray-200 py-2 px-4" id="category-container"></div>
     </nav>
 
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Productos renderizados aquí -->
-        </div>
+        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
     </main>
 
     <!-- Modal del Carrito -->
@@ -100,7 +94,6 @@
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                 <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg pointer-events-auto">
                     
-                    <!-- Header Modal -->
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b">
                         <h3 class="text-lg font-medium leading-6 text-gray-900">Tu Carrito</h3>
                         <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-500">
@@ -108,10 +101,8 @@
                         </button>
                     </div>
 
-                    <!-- Body Modal -->
                     <div class="px-4 py-5 sm:p-6 max-h-[60vh] overflow-y-auto">
                         <div id="cart-items" class="space-y-4">
-                            <!-- Items del carrito -->
                             <p class="text-center text-gray-500 py-4">El carrito está vacío</p>
                         </div>
                         
@@ -121,7 +112,6 @@
                                 <span id="cart-total">$ 0.00</span>
                             </div>
 
-                            <!-- Formulario de Cliente -->
                             <form id="checkout-form" class="space-y-3" onsubmit="processCheckout(event)">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Nombre Completo</label>
@@ -150,42 +140,40 @@
 
     <!-- Script Principal -->
     <script>
-        // CONFIGURACIÓN INICIAL
-        // Lee el archivo local 'datos_tienda.csv' ubicado en la raíz del repositorio
+        // CONFIGURACIÓN: Lee archivo local 'datos_tienda.csv'
         const CSV_LOCAL_FILE = "./datos_tienda.csv";
         
-        // ESTADO DE LA APLICACIÓN
         let storeConfig = {};
         let products = [];
         let categories = new Set();
         let cart = [];
         let currentCategory = 'Todos';
 
-        // INICIALIZACIÓN
         window.onload = function() {
             lucide.createIcons();
             
-            // Cargar CSV local
             Papa.parse(CSV_LOCAL_FILE, {
                 download: true,
                 header: true,
+                skipEmptyLines: true,
                 complete: function(results) {
                     processData(results.data);
                 },
                 error: function(err) {
-                    console.warn("Error cargando CSV local. Asegúrate de que estás sirviendo esto desde un servidor (http/https) y no directamente desde el sistema de archivos (file://)", err);
-                    useDummyData();
+                    console.warn("Error cargando CSV local:", err);
+                    useDummyData(); // Fallback por si falla la carga local
                 }
             });
         };
 
         function useDummyData() {
-            // Datos simulados por si falla la carga local (ej. CORS en local file system)
+            // Datos de prueba con estructura simplificada
             const dummyData = [
                 {
                     "Tienda_Nombre": "Tienda Demo", "Tienda_Color_1": "#0ea5e9", "Tienda_Moneda": "MXN", "Tienda_Prefijo": "52", "Tienda_Telefono": "5512345678",
-                    "Prod_Categoria": "Demo", "Prod_Nombre": "Producto Ejemplo", "Prod_Precio": "100.00", "Prod_Imagen": "", "Prod_Descripcion": "Descripción de prueba.", 
-                    "Prod_Variantes": "Color:Rojo,Azul|Talla:M,L"
+                    "Prod_Categoria": "Demo", "Prod_Nombre": "Producto Ejemplo", "Prod_Precio": "100.00", "Prod_Imagen": "", "Prod_Descripcion": "Ejemplo.", 
+                    "Var1_Titulo": "Color", "Var1_Opciones": "Rojo;Azul", "Var1_Fotos": "rojo.jpg;azul.jpg",
+                    "Var2_Titulo": "Talla", "Var2_Opciones": "S;M"
                 }
             ];
             processData(dummyData);
@@ -219,7 +207,8 @@
                     desc: row.Prod_Descripcion,
                     price: parseFloat(row.Prod_Precio.replace(/[^0-9.]/g, '')),
                     image: row.Prod_Imagen,
-                    variants: parseVariants(row.Prod_Variantes)
+                    // Parseo usando columnas separadas
+                    variants: parseVariantsColumns(row)
                 };
             });
 
@@ -228,29 +217,34 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        // Parsea la cadena de variantes: "Color:Rojo=img1.jpg,Azul|Talla:S,M"
-        function parseVariants(variantStr) {
-            if (!variantStr) return [];
+        // Función que lee las columnas Var1_ y Var2_ separadas por punto y coma
+        function parseVariantsColumns(row) {
+            const variants = [];
             
-            // Paso 1: Separar grupos (ej: Color y Talla) con PIPE |
-            const groups = variantStr.split('|');
-            
-            return groups.map(group => {
-                const parts = group.split(':');
-                if (parts.length < 2) return null;
-
-                const label = parts[0].trim(); // "Color" o "Talla"
-                const optionsRaw = parts[1].split(',');
+            // Variante 1
+            if (row.Var1_Titulo && row.Var1_Opciones) {
+                const options = row.Var1_Opciones.split(';').map(s => s.trim());
+                const images = row.Var1_Fotos ? row.Var1_Fotos.split(';').map(s => s.trim()) : [];
                 
-                const options = optionsRaw.map(opt => {
-                    const [val, img] = opt.split('=');
-                    return { 
-                        name: val.trim(), 
-                        image: img ? img.trim() : null 
-                    };
+                variants.push({
+                    label: row.Var1_Titulo,
+                    options: options.map((opt, i) => ({
+                        name: opt,
+                        image: images[i] || null // Asigna foto correspondiente al índice
+                    }))
                 });
-                return { label, options };
-            }).filter(g => g !== null);
+            }
+
+            // Variante 2
+            if (row.Var2_Titulo && row.Var2_Opciones) {
+                const options = row.Var2_Opciones.split(';').map(s => s.trim());
+                variants.push({
+                    label: row.Var2_Titulo,
+                    options: options.map(opt => ({ name: opt, image: null }))
+                });
+            }
+
+            return variants;
         }
 
         function renderCategories() {
