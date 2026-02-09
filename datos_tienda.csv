@@ -1,0 +1,6 @@
+Tienda_Nombre,Tienda_Descripcion,Tienda_Telefono,Tienda_Prefijo,Tienda_Moneda,Tienda_Color_1,Tienda_Color_2,Prod_Categoria,Prod_Nombre,Prod_Descripcion,Prod_Precio,Prod_Variantes,Prod_Imagen
+Mi Tienda Online,Tienda de demostración WhatsApp,1234567890,52,MXN,#0f766e,#115e59,Electrónica,Audífonos Pro,Cancelación de ruido activa y 20h de batería.,1296.00,Color:Negro=audifono_negro.png,Blanco=audifono_blanco.png,audifonos_main.jpg
+,,,,,,,Electrónica,Smartwatch Series 5,Resistente al agua y monitor cardíaco.,899.50,Correa:Sport,Cuero,reloj.jpg
+,,,,,,,Ropa,Camiseta Básica,100% Algodón peinado.,250.00,Color:Rojo=camiseta_roja.jpg,Azul=camiseta_azul.jpg|Talla:S,M,L,XL,camiseta_azul.jpg
+,,,,,,,Ropa,Pantalones Jean,Denim de alta calidad.,550.00,Color:Azul Claro=jean_claro.jpg,Azul Oscuro=jean_oscuro.jpg|Talla:28,30,32,34,jean_main.jpg
+,,,,,,,Calzado,Zapatillas Running,Suela de impacto cero.,1500.00,Color:Rojo=zapato_rojo.jpg,Azul=zapato_azul.jpg|Talla:25,26,27,28,zapato_rojo.jpg
