@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Premium</title>
+    
+    <!-- Usamos Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fuente Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            500: '#6366f1', // Indigo 500
+                            600: '#4f46e5', // Indigo 600
+                            700: '#4338ca', // Indigo 700
+                        },
+                        accent: '#ec4899', // Pink 500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            background-color: #f8fafc; 
+            padding-bottom: 100px;
+        }
+        
+        /* Animaciones */
+        .card-enter { 
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Botones con degradado */
+        .btn-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        .btn-gradient:active {
+            transform: scale(0.98);
+        }
+
+        /* Barra flotante Glassmorphism */
+        .glass-bar {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Toast moderno */
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            background: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%) translateY(20px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            bottom: 110px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <!-- Toast de Notificación -->
+    <div id="toast">
+        <i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
+        <span id="toast-msg">Producto añadido</span>
+    </div>
+
+    <!-- HERO HEADER -->
+    <header class="bg-slate-900 text-white pb-16 pt-6 relative overflow-hidden">
+        <!-- Elemento decorativo de fondo -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-primary-500 opacity-20 blur-3xl"></div>
+        
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 id="shop-name-display" class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">Mi Tienda</h1>
+                    <p class="text-slate-400 text-sm">Catálogo Exclusivo</p>
+                </div>
+                
+                <button onclick="toggleCart()" class="relative bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition group border border-slate-700">
+                    <i data-lucide="shopping-bag" class="text-indigo-400 group-hover:text-white transition"></i>
+                    <span id="header-cart-count" class="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold rounded-lg h-5 min-w-[20px] px-1 flex items-center justify-center border-2 border-slate-900 transform scale-0 transition-transform">0</span>
+                </button>
+            </div>
+
+            <!-- Buscador estilo 'píldora' -->
+            <div class="relative max-w-lg">
+                <input type="text" id="search-input" placeholder="¿Qué estás buscando hoy?" class="w-full py-4 pl-12 pr-4 rounded-full bg-slate-800/50 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-slate-800 transition backdrop-blur-sm">
+                <i data-lucide="search" class="absolute left-4 top-4 text-slate-400 w-5 h-5"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-6xl mx-auto px-4 -mt-10 relative z-20">
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Productos generados por JS -->
+        </div>
+    </main>
+
+    <!-- BARRA FLOTANTE DEL CARRITO -->
+    <div id="sticky-cart-bar" class="fixed bottom-0 left-0 w-full glass-bar shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 transform translate-y-full transition-transform duration-500 ease-in-out">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary-100 p-2 rounded-lg text-primary-600 hidden sm:block">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Total a pagar</span>
+                    <span id="sticky-total" class="font-extrabold text-xl text-slate-900">$0.00</span>
+                </div>
+            </div>
+            <button onclick="toggleCart()" class="btn-gradient text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-indigo-500/30 flex items-center gap-2 text-sm sm:text-base">
+                Ver Pedido <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL LATERAL (DRAWER) -->
+    <div id="cart-modal" class="fixed inset-0 bg-slate-900/60 z-50 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm flex justify-end">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col" id="cart-panel">
+            
+            <!-- Header Drawer -->
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Tu Carrito</h2>
+                    <p class="text-xs text-slate-500 mt-1">Revisa tus items antes de enviar</p>
+                </div>
+                <button onclick="toggleCart()" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-500 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Lista Items -->
+            <div class="flex-1 p-6 overflow-y-auto bg-slate-50">
+                <div id="cart-items-container" class="space-y-4"></div>
+                
+                <div id="empty-cart-msg" class="text-center py-20 hidden">
+                    <div class="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shopping-bag" class="w-8 h-8 text-slate-300"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-700">Tu carrito está vacío</h3>
+                    <p class="text-slate-400 text-sm mt-1">¡Añade algo genial hoy!</p>
+                </div>
+            </div>
+
+            <!-- Footer Drawer -->
+            <div class="p-6 bg-white border-t border-slate-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+                <div class="space-y-1 mb-6">
+                    <div class="flex justify-between text-2xl font-black text-slate-900">
+                        <span>Total</span>
+                        <span id="cart-final-total">$0.00</span>
+                    </div>
+                </div>
+
+                <form id="checkout-form" class="space-y-4" onsubmit="event.preventDefault(); sendToWhatsApp();">
+                    <div class="grid grid-cols-1 gap-4">
+                        <input type="text" id="customer-name" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition" placeholder="Tu Nombre">
+                        <input type="tel" id="customer-phone" required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition" placeholder="Teléfono de contacto">
+                    </div>
+                    <textarea id="customer-address" required rows="2" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition resize-none" placeholder="Dirección completa de entrega"></textarea>
+                    
+                    <button type="submit" class="w-full btn-gradient text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-500/20 flex justify-center items-center gap-2 group">
+                        Confirmar por WhatsApp
+                        <i data-lucide="send" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGICA JS (Sin cambios funcionales, solo adaptación al nuevo DOM) -->
+    <script>
+        // CONFIGURACIÓN DE LA TIENDA
+        const STORE_CONFIG = {
+            name: "Boutique V2",
+            currency: "$",
+            whatsappNumber: "1234567890", // TU NUMERO AQUI
+            countryCode: "1"
+        };
+
+        const products = [
+            {
+                id: 1, name: "Camiseta Premium Blanca", price: 25.00, category: "Ropa",
+                description: "Algodón 100%, corte moderno y fresco.",
+                image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 2, name: "Zapatillas Urbanas", price: 55.50, category: "Calzado",
+                description: "Diseño ergonómico ideal para caminar todo el día.",
+                image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 3, name: "Gorra Clásica", price: 15.00, category: "Accesorios",
+                description: "Ajustable, visera curva, varios colores.",
+                image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 4, name: "Mochila de Viaje", price: 45.00, category: "Accesorios",
+                description: "Impermeable con compartimento para laptop.",
+                image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 5, name: "Reloj Minimalista", price: 89.99, category: "Accesorios",
+                description: "Correa de cuero genuino y maquinaria de cuarzo.",
+                image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 6, name: "Gafas de Sol", price: 30.00, category: "Accesorios",
+                description: "Protección UV400, marco ligero.",
+                image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 7, name: "Auriculares Bluetooth", price: 35.00, category: "Tecnología",
+                description: "Sonido HD con cancelación de ruido pasiva.",
+                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 8, name: "Botella Térmica", price: 18.50, category: "Hogar",
+                description: "Mantiene bebidas frías por 24h y calientes por 12h.",
+                image: "https://images.unsplash.com/photo-1536939459926-301728717817?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 9, name: "Funda para Laptop", price: 22.00, category: "Tecnología",
+                description: "Acolchada, resistente al agua, para 13-15 pulgadas.",
+                image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=500&q=80"
+            }
+        ];
+
+        let cart = {}; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('shop-name-display').textContent = STORE_CONFIG.name;
+            renderProducts(products);
+            lucide.createIcons();
+            
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = products.filter(p => 
+                    p.name.toLowerCase().includes(term) || 
+                    p.description.toLowerCase().includes(term)
+                );
+                renderProducts(filtered);
+            });
+        });
+
+        function renderProducts(productList) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+
+            productList.forEach((product, index) => {
+                const card = document.createElement('div');
+                // Añadimos delay escalonado para la animación de entrada
+                card.style.animationDelay = `${index * 50}ms`;
+                card.className = 'card-enter bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col border border-slate-100 group';
+                
+                card.innerHTML = `
+                    <div class="h-56 overflow-hidden relative">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    </div>
+                    <div class="p-5 flex flex-col flex-1">
+                        <div class="flex-1 mb-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-slate-800 text-lg leading-tight">${product.name}</h3>
+                                <span class="text-lg font-extrabold text-primary-600 whitespace-nowrap ml-2">${STORE_CONFIG.currency}${product.price.toFixed(2)}</span>
+                            </div>
+                            <p class="text-sm text-slate-500 leading-relaxed">${product.description}</p>
+                        </div>
+                        
+                        <!-- Controles -->
+                        <div class="flex items-center gap-3 mt-auto pt-4 border-t border-slate-50">
+                            <div class="flex items-center bg-slate-100 rounded-xl h-11 p-1">
+                                <button onclick="adjustLocalQty(${product.id}, -1)" class="w-9 h-full flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-red-500 hover:shadow-sm transition">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <input id="qty-input-${product.id}" type="number" value="1" min="1" class="w-10 text-center bg-transparent border-none text-sm font-bold text-slate-700 focus:outline-none" readonly>
+                                <button onclick="adjustLocalQty(${product.id}, 1)" class="w-9 h-full flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-green-600 hover:shadow-sm transition">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            
+                            <button onclick="addToCart(${product.id})" class="btn-gradient text-white h-11 px-4 rounded-xl font-bold flex-1 flex items-center justify-center gap-2 shadow-md hover:shadow-indigo-500/25 active:scale-95">
+                                <span class="hidden sm:inline">Agregar</span>
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function adjustLocalQty(productId, change) {
+            const input = document.getElementById(`qty-input-${productId}`);
+            let newVal = parseInt(input.value) + change;
+            if (newVal < 1) newVal = 1;
+            input.value = newVal;
+        }
+
+        function addToCart(productId) {
+            const input = document.getElementById(`qty-input-${productId}`);
+            const qtyToAdd = parseInt(input.value);
+            const product = products.find(p => p.id === productId);
+
+            if (!cart[productId]) {
+                cart[productId] = { ...product, qty: qtyToAdd };
+            } else {
+                cart[productId].qty += qtyToAdd;
+            }
+
+            input.value = 1;
+            updateUI();
+            showToast(`${qtyToAdd}x ${product.name} agregado`);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            const msgSpan = document.getElementById("toast-msg");
+            msgSpan.textContent = message;
+            toast.className = "show";
+            
+            // Reiniciar timer si se llama varias veces rápido
+            if(window.toastTimeout) clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => { 
+                toast.className = ""; 
+            }, 3000);
+        }
+
+        function updateQty(productId, change) {
+            if (!cart[productId]) return;
+            cart[productId].qty += change;
+            if (cart[productId].qty <= 0) delete cart[productId];
+            updateUI();
+        }
+
+        function updateUI() {
+            let totalItems = 0;
+            let totalPrice = 0;
+            
+            Object.values(cart).forEach(item => {
+                totalItems += item.qty;
+                totalPrice += item.qty * item.price;
+            });
+
+            const badge = document.getElementById('header-cart-count');
+            badge.textContent = totalItems;
+            
+            const stickyBar = document.getElementById('sticky-cart-bar');
+            if (totalItems > 0) {
+                badge.classList.remove('scale-0');
+                stickyBar.classList.remove('translate-y-full');
+            } else {
+                badge.classList.add('scale-0');
+                stickyBar.classList.add('translate-y-full');
+            }
+
+            const formattedPrice = `${STORE_CONFIG.currency}${totalPrice.toFixed(2)}`;
+            document.getElementById('sticky-total').textContent = formattedPrice;
+            document.getElementById('cart-final-total').textContent = formattedPrice;
+
+            renderCartItems();
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            const emptyMsg = document.getElementById('empty-cart-msg');
+            const items = Object.values(cart);
+
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition hover:border-indigo-100';
+                row.innerHTML = `
+                    <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src="${item.image}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h4 class="font-bold text-sm text-slate-800 line-clamp-1">${item.name}</h4>
+                        <div class="text-primary-600 font-bold text-sm mt-1">${STORE_CONFIG.currency}${(item.price * item.qty).toFixed(2)}</div>
+                    </div>
+                    <div class="flex flex-col justify-center items-end">
+                        <div class="flex items-center bg-slate-50 rounded-lg p-1 border border-slate-100">
+                            <button onclick="updateQty(${item.id}, -1)" class="w-7 h-7 flex items-center justify-center rounded-md bg-white text-slate-500 shadow-sm hover:text-red-500">
+                                <i data-lucide="minus" class="w-3 h-3"></i>
+                            </button>
+                            <span class="w-8 text-center text-xs font-bold text-slate-700">${item.qty}</span>
+                            <button onclick="updateQty(${item.id}, 1)" class="w-7 h-7 flex items-center justify-center rounded-md bg-white text-slate-500 shadow-sm hover:text-green-600">
+                                <i data-lucide="plus" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cart-modal');
+            const panel = document.getElementById('cart-panel');
+            
+            if (modal.classList.contains('hidden')) {
+                updateUI();
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    panel.classList.remove('translate-x-full');
+                }, 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.add('opacity-0');
+                panel.classList.add('translate-x-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+        }
+
+        function sendToWhatsApp() {
+            const name = document.getElementById('customer-name').value;
+            const phone = document.getElementById('customer-phone').value;
+            const address = document.getElementById('customer-address').value;
+            
+            if (!name || !phone || !address) {
+                showToast("❌ Faltan datos de envío");
+                return;
+            }
+
+            const items = Object.values(cart);
+            if (items.length === 0) return;
+
+            let message = `*PEDIDO WEB V2 - ${STORE_CONFIG.name}*\n----------------------------\n`;
+            message += `👤 *Cliente:* ${name}\n`;
+            message += `📞 *Teléfono:* ${phone}\n`;
+            message += `📍 *Dirección:* ${address}\n\n`;
+            message += `*CARRITO DE COMPRA:*\n`;
+            
+            let total = 0;
+            items.forEach(item => {
+                const subtotal = item.qty * item.price;
+                total += subtotal;
+                message += `📦 ${item.qty}x ${item.name} ($${subtotal.toFixed(2)})\n`;
+            });
+
+            message += `\n💰 *TOTAL FINAL: ${STORE_CONFIG.currency}${total.toFixed(2)}*`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const fullPhone = STORE_CONFIG.countryCode + STORE_CONFIG.whatsappNumber;
+            window.open(`https://wa.me/${fullPhone}?text=${encodedMessage}`, '_blank');
+        }
+    </script>
+</body>
+</html>
