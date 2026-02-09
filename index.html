@@ -139,8 +139,8 @@
         <div class="max-w-6xl mx-auto px-6 relative z-10">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h1 id="shop-name-display" class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">Cargando...</h1>
-                    <p id="shop-desc-display" class="text-slate-400 text-sm">Espere un momento</p>
+                    <h1 id="shop-name-display" class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">Bienvenido</h1>
+                    <p id="shop-desc-display" class="text-slate-400 text-sm">Cargando catálogo...</p>
                 </div>
                 
                 <button onclick="toggleCart()" class="relative bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition group border border-slate-700">
@@ -168,6 +168,14 @@
 
         <div id="loading-indicator" class="flex justify-center py-20">
             <div class="loader"></div>
+        </div>
+        
+        <div id="empty-state-msg" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <div class="bg-slate-200 rounded-full p-6 mb-4">
+                <i data-lucide="database" class="w-12 h-12 text-slate-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-700">Sin conexión de datos</h3>
+            <p class="text-slate-500 mt-2 max-w-md">Configura la URL de tu Google Sheet en el código para ver tus productos aquí.</p>
         </div>
 
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
@@ -244,32 +252,28 @@
     <!-- LOGICA JS -->
     <script>
         // ==========================================
-        // 🔴 CONFIGURACIÓN: PEGA TU ENLACE CSV AQUÍ
+        // 🔴 CONFIGURACIÓN:
+        // Pega aquí la URL de tu Google Sheet (Publicar en web > CSV)
         // ==========================================
         const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1DToss1z9OR-S5FM1JORfXh71rJWzhAKAnQtJBFq5D3E/edit?usp=sharing"; 
-        // Ejemplo: "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"
 
         // ==========================================
-        // 🛠️ DATOS DE DEMOSTRACIÓN (Se cargan si la URL está vacía)
+        // DATOS INTERNOS ELIMINADOS
+        // La web aparecerá vacía hasta que configures la URL
         // ==========================================
-        const DEMO_CSV = `Setup,Config,Phone,Prefix,Currency,Color1,Color2,Accent
-Tienda Demo,Tu catálogo online listo para usar,5512345678,52,$,#6366f1,#4f46e5,#ec4899
-ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Tecnología,Auriculares Premium,Sonido de alta fidelidad con cancelación de ruido.,129.99,https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80,Color,Negro, Blanco,,,,,
-ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ropa,Camiseta Minimal,Algodón 100% orgánico de alta duración.,24.50,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80,Talla,S, M, L, XL,,Color,Blanco, Negro, Azul,,
-ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Hogar,Lámpara Moderna,Iluminación LED ambiental para tu espacio de trabajo.,45.00,https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80,,,,,,,,
-ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inteligente,Control de salud y notificaciones en tu muñeca.,89.99,https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80,Correa,Silicona, Cuero,,,,,,`;
-
+        
         let products = [];
         let cart = {}; 
         let storeConfig = {};
         let activeCategory = 'Todos';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // CORRECCIÓN: Si no hay URL configurada, usar demo automáticamente
-            // esto evita que la página se quede rota o vacía al probarla
             if(!GOOGLE_SHEET_URL) {
-                console.log("Modo Demo Activado");
-                parseCSV(DEMO_CSV);
+                // Si no hay URL, mostramos mensaje de estado vacío y paramos
+                document.getElementById('loading-indicator').classList.add('hidden');
+                document.getElementById('empty-state-msg').classList.remove('hidden');
+                document.getElementById('shop-name-display').textContent = "Tienda";
+                document.getElementById('shop-desc-display').textContent = "Esperando configuración...";
                 lucide.createIcons();
                 return;
             }
@@ -289,27 +293,14 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
                 const response = await fetch(GOOGLE_SHEET_URL);
                 const data = await response.text();
                 
-                // CORRECCIÓN: Validación de seguridad
-                // Si la URL devuelve HTML en lugar de CSV, lanzamos un error controlado
                 if(data.trim().startsWith('<') || data.includes('<!DOCTYPE')) {
-                    throw new Error("La URL configurada no es un CSV válido (parece una página web).");
+                    throw new Error("La URL configurada no es un CSV válido.");
                 }
 
                 parseCSV(data);
             } catch (error) {
                 console.error("Error cargando CSV:", error);
-                
-                // Fallback visual en caso de error
-                document.getElementById('shop-name-display').textContent = "Error de Carga";
-                document.getElementById('shop-desc-display').textContent = "No se pudo leer el archivo de datos";
-                document.getElementById('loading-indicator').innerHTML = `
-                    <div class="text-center text-red-500 p-4 bg-red-50 rounded-lg">
-                        <p class="font-bold">Error cargando el catálogo</p>
-                        <p class="text-xs mt-1 text-slate-500">${error.message}</p>
-                        <button onclick="parseCSV(DEMO_CSV); lucide.createIcons();" class="mt-3 text-sm underline text-indigo-600 font-bold cursor-pointer">
-                            Cargar datos de prueba
-                        </button>
-                    </div>`;
+                document.getElementById('loading-indicator').innerHTML = `<p class="text-red-500">Error al cargar datos. Verifica la URL.</p>`;
             }
         }
 
@@ -323,21 +314,20 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
         }
 
         function parseCSV(csvText) {
-            // Usamos split normal para evitar problemas con regex complejos en algunos navegadores
+            // Regex robusto para separar CSV respetando comillas
             const rows = csvText.split(/\r?\n/).map(row => {
-                // Regex simple para respetar comillas en CSV
                 return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
             });
 
-            // Fila 1: Configuración Tienda
+            // Fila 1 (Índice 1): Configuración Tienda + Primer Producto
             const configRow = rows[1]; 
             
-            // Validación básica para evitar crash si el CSV está vacío o mal formado
             if (!configRow || configRow.length < 2) {
-                console.error("CSV mal formado o vacío");
+                console.error("CSV vacío o mal formado");
                 return;
             }
 
+            // Leemos la configuración (Columnas 0-7)
             storeConfig = {
                 name: cleanText(configRow[0]),
                 desc: cleanText(configRow[1]),
@@ -353,10 +343,10 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
 
             products = [];
             
-            // Empezamos desde la fila 1 (datos)
+            // Procesamiento de productos
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
-                // Saltamos si no hay nombre de producto (columna 9) o si es la fila de configuración (que no suele tener producto)
+                // Ignoramos si no hay nombre de producto (columna 9)
                 if (!row[9] || row[9].trim() === '') continue; 
 
                 const rawImage = cleanText(row[12]);
@@ -364,20 +354,20 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
 
                 let options = [];
                 
-                // Var 1
+                // Variante 1
                 if (cleanText(row[13])) {
                     options.push({
                         name: cleanText(row[13]),
                         values: cleanText(row[14]).split(',').map(s => s.trim()),
-                        images: processImageValues(row[15]) // Procesa imagenes de variante
+                        images: processImageValues(row[15])
                     });
                 }
-                // Var 2
+                // Variante 2
                 if (cleanText(row[16])) {
                     options.push({
                         name: cleanText(row[16]),
                         values: cleanText(row[17]).split(',').map(s => s.trim()),
-                        images: processImageValues(row[18]) // Procesa imagenes de variante
+                        images: processImageValues(row[18])
                     });
                 }
 
@@ -396,6 +386,7 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
             renderProducts(products);
             
             document.getElementById('loading-indicator').classList.add('hidden');
+            document.getElementById('empty-state-msg').classList.add('hidden');
             document.getElementById('product-grid').classList.remove('hidden');
         }
 
@@ -445,17 +436,14 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
             renderProducts(filtered);
         }
 
-        // Nueva función para actualizar la imagen al cambiar la variante
         function updateVariantImage(productId, optionIndex, valueIndex) {
             const product = products.find(p => p.id === productId);
             if(!product) return;
             
             const option = product.options[optionIndex];
-            // Verificamos si esta variante tiene imágenes asignadas y si existe para el índice seleccionado
             if(option && option.images && option.images.length > valueIndex) {
                 const imgEl = document.getElementById(`img-${productId}`);
                 if(imgEl) {
-                    // Pequeña animación de fade
                     imgEl.style.opacity = '0.7';
                     setTimeout(() => {
                         imgEl.src = option.images[valueIndex];
@@ -483,7 +471,6 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
                 if (product.options && product.options.length > 0) {
                     optionsHtml += '<div class="mt-4 space-y-2">';
                     product.options.forEach((opt, idx) => {
-                        // Añadimos onchange para detectar cambios
                         optionsHtml += `
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1 block mb-1">${opt.name}</label>
@@ -506,7 +493,6 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
 
                 card.innerHTML = `
                     <div class="h-56 overflow-hidden relative bg-slate-100">
-                        <!-- Añadido ID a la imagen para poder actualizarla -->
                         <img id="img-${product.id}" src="${product.image}" alt="${product.name}" class="w-full h-full object-cover transition-all duration-300 group-hover:scale-105" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
                     </div>
                     <div class="p-5 flex flex-col flex-1">
@@ -753,5 +739,4 @@ ID,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Ignorar,Accesorios,Reloj Inte
         }
     </script>
 </body>
-
 </html>
