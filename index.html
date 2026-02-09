@@ -151,9 +151,8 @@
     <!-- Script Principal -->
     <script>
         // CONFIGURACIÓN INICIAL
-        // IMPORTANTE: REEMPLAZA ESTA URL CON TU ENLACE DE GOOGLE SHEETS PUBLICADO COMO CSV
-        // Si lo pruebas localmente sin servidor, puede dar error de CORS. Usa un servidor local o súbelo a GitHub Pages.
-        const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSya-cP4KuZu9HnVuRyB9gRsqqlWXDor1_288VVMd0u3ApDD4DktHUt2wvDvXxLOJ9i61SYEYglFiaT/pub?gid=445806819&single=true&output=csv'; 
+        // Lee el archivo local 'datos_tienda.csv' ubicado en la raíz del repositorio
+        const CSV_LOCAL_FILE = "./datos_tienda.csv";
         
         // ESTADO DE LA APLICACIÓN
         let storeConfig = {};
@@ -164,34 +163,29 @@
 
         // INICIALIZACIÓN
         window.onload = function() {
-            // Inicializar iconos
             lucide.createIcons();
             
-            // Intentar cargar CSV. Si falla por CORS (común en local), usamos datos dummy para demo
-            Papa.parse(URL_GOOGLE_SHEET, {
+            // Cargar CSV local
+            Papa.parse(CSV_LOCAL_FILE, {
                 download: true,
                 header: true,
                 complete: function(results) {
                     processData(results.data);
                 },
                 error: function(err) {
-                    console.warn("No se pudo cargar el CSV (probablemente error de CORS o URL inválida). Usando datos de prueba.", err);
+                    console.warn("Error cargando CSV local. Asegúrate de que estás sirviendo esto desde un servidor (http/https) y no directamente desde el sistema de archivos (file://)", err);
                     useDummyData();
                 }
             });
         };
 
         function useDummyData() {
-            // Datos simulados por si no hay CSV conectado aún
+            // Datos simulados por si falla la carga local (ej. CORS en local file system)
             const dummyData = [
                 {
-                    "Tienda_Nombre": "Moda & Estilo", "Tienda_Color_1": "#0ea5e9", "Tienda_Moneda": "MXN", "Tienda_Prefijo": "52", "Tienda_Telefono": "5512345678",
-                    "Prod_Categoria": "Calzado", "Prod_Nombre": "Tenis Runner Pro", "Prod_Precio": "1296.00", "Prod_Imagen": "zapato.jpg", "Prod_Descripcion": "Tenis de alto rendimiento.", 
-                    "Prod_Variantes": "Color:Rojo=zapato_rojo.jpg,Azul=zapato_azul.jpg"
-                },
-                {
-                    "Prod_Categoria": "Ropa", "Prod_Nombre": "Camiseta Básica", "Prod_Precio": "350.00", "Prod_Imagen": "camiseta.jpg", "Prod_Descripcion": "100% Algodón.", 
-                    "Prod_Variantes": "Talla:S,M,L,XL"
+                    "Tienda_Nombre": "Tienda Demo", "Tienda_Color_1": "#0ea5e9", "Tienda_Moneda": "MXN", "Tienda_Prefijo": "52", "Tienda_Telefono": "5512345678",
+                    "Prod_Categoria": "Demo", "Prod_Nombre": "Producto Ejemplo", "Prod_Precio": "100.00", "Prod_Imagen": "", "Prod_Descripcion": "Descripción de prueba.", 
+                    "Prod_Variantes": "Color:Rojo,Azul|Talla:M,L"
                 }
             ];
             processData(dummyData);
@@ -200,7 +194,6 @@
         function processData(data) {
             if (!data || data.length === 0) return;
 
-            // 1. Leer Configuración (Tomamos la primera fila válida)
             const firstRow = data[0];
             storeConfig = {
                 name: firstRow.Tienda_Nombre || "Mi Tienda",
@@ -212,13 +205,11 @@
                 color2: firstRow.Tienda_Color_2 || "#1e40af"
             };
 
-            // Aplicar configuración visual
             document.title = storeConfig.name;
             document.getElementById('store-title').innerText = storeConfig.name;
             document.documentElement.style.setProperty('--primary-color', storeConfig.color1);
             document.documentElement.style.setProperty('--secondary-color', storeConfig.color2);
 
-            // 2. Procesar Productos
             products = data.filter(row => row.Prod_Nombre && row.Prod_Precio).map((row, index) => {
                 categories.add(row.Prod_Categoria);
                 return {
@@ -226,7 +217,7 @@
                     category: row.Prod_Categoria,
                     name: row.Prod_Nombre,
                     desc: row.Prod_Descripcion,
-                    price: parseFloat(row.Prod_Precio.replace(/[^0-9.]/g, '')), // Limpiar precio
+                    price: parseFloat(row.Prod_Precio.replace(/[^0-9.]/g, '')),
                     image: row.Prod_Imagen,
                     variants: parseVariants(row.Prod_Variantes)
                 };
@@ -238,25 +229,28 @@
         }
 
         // Parsea la cadena de variantes: "Color:Rojo=img1.jpg,Azul|Talla:S,M"
-        // Formato simple: "Etiqueta:Opcion1=img,Opcion2"
         function parseVariants(variantStr) {
             if (!variantStr) return [];
-            // Ejemplo entrada: "Color:Rojo=r.jpg,Azul=a.jpg"
-            const parts = variantStr.split(':');
-            if (parts.length < 2) return [];
-
-            const label = parts[0].trim(); // "Color"
-            const optionsRaw = parts[1].split(','); // ["Rojo=r.jpg", "Azul=a.jpg"]
             
-            const options = optionsRaw.map(opt => {
-                const [val, img] = opt.split('=');
-                return { 
-                    name: val.trim(), 
-                    image: img ? img.trim() : null 
-                };
-            });
+            // Paso 1: Separar grupos (ej: Color y Talla) con PIPE |
+            const groups = variantStr.split('|');
+            
+            return groups.map(group => {
+                const parts = group.split(':');
+                if (parts.length < 2) return null;
 
-            return { label, options };
+                const label = parts[0].trim(); // "Color" o "Talla"
+                const optionsRaw = parts[1].split(',');
+                
+                const options = optionsRaw.map(opt => {
+                    const [val, img] = opt.split('=');
+                    return { 
+                        name: val.trim(), 
+                        image: img ? img.trim() : null 
+                    };
+                });
+                return { label, options };
+            }).filter(g => g !== null);
         }
 
         function renderCategories() {
@@ -272,8 +266,6 @@
         function filterCategory(cat) {
             currentCategory = cat;
             renderProducts();
-            
-            // Actualizar estilos de botones
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if(btn.innerText === cat) {
                     btn.classList.add('bg-gray-800', 'text-white');
@@ -294,20 +286,18 @@
                 : products.filter(p => p.category === currentCategory);
 
             filtered.forEach(p => {
-                // Lógica de variantes
-                let variantSelector = '';
-                if (p.variants && p.variants.options) {
-                    variantSelector = `
+                let variantSelectors = '';
+                if (Array.isArray(p.variants) && p.variants.length > 0) {
+                    variantSelectors = p.variants.map((v, idx) => `
                         <div class="mt-3">
-                            <label class="text-xs text-gray-500 font-bold uppercase">${p.variants.label}:</label>
-                            <select id="var-select-${p.id}" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border bg-white" onchange="changeProductImage(${p.id}, this)">
-                                ${p.variants.options.map(opt => `<option value="${opt.name}" data-img="${opt.image || ''}">${opt.name}</option>`).join('')}
+                            <label class="text-xs text-gray-500 font-bold uppercase">${v.label}:</label>
+                            <select id="var-select-${p.id}-${idx}" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border bg-white" onchange="changeProductImage(${p.id}, this)">
+                                ${v.options.map(opt => `<option value="${opt.name}" data-img="${opt.image || ''}">${opt.name}</option>`).join('')}
                             </select>
                         </div>
-                    `;
+                    `).join('');
                 }
 
-                // Imagen por defecto (busca en carpeta images/)
                 const imgPath = p.image ? `images/${p.image}` : 'https://via.placeholder.com/300x300?text=Sin+Imagen';
 
                 const card = document.createElement('div');
@@ -321,7 +311,7 @@
                         <h3 class="text-lg font-bold text-gray-900 mt-1">${p.name}</h3>
                         <p class="text-sm text-gray-500 mt-1 line-clamp-2 flex-1">${p.desc}</p>
                         
-                        ${variantSelector}
+                        ${variantSelectors}
 
                         <div class="mt-4 flex items-end justify-between">
                             <div class="flex flex-col">
@@ -341,7 +331,6 @@
             lucide.createIcons();
         }
 
-        // Cambiar imagen al seleccionar variante
         window.changeProductImage = function(id, select) {
             const selectedOption = select.options[select.selectedIndex];
             const newImg = selectedOption.getAttribute('data-img');
@@ -352,18 +341,18 @@
 
         window.addToCart = function(id) {
             const product = products.find(p => p.id === id);
-            const qtyInput = document.getElementById(`qty-${id}`);
-            const qty = parseInt(qtyInput.value);
+            const qty = parseInt(document.getElementById(`qty-${id}`).value);
             
-            // Obtener variante seleccionada si existe
-            let selectedVariant = null;
-            const varSelect = document.getElementById(`var-select-${id}`);
-            if (varSelect) {
-                selectedVariant = `${product.variants.label}: ${varSelect.value}`;
+            let selectedVariants = [];
+            if (Array.isArray(product.variants)) {
+                product.variants.forEach((v, idx) => {
+                    const select = document.getElementById(`var-select-${id}-${idx}`);
+                    selectedVariants.push(`${v.label}: ${select.value}`);
+                });
             }
+            const variantString = selectedVariants.join(', ');
 
-            // Comprobar si ya existe en el carrito con la misma variante
-            const existingItem = cart.find(item => item.id === id && item.variant === selectedVariant);
+            const existingItem = cart.find(item => item.id === id && item.variant === variantString);
 
             if (existingItem) {
                 existingItem.qty += qty;
@@ -373,12 +362,11 @@
                     name: product.name,
                     price: product.price,
                     image: product.image,
-                    variant: selectedVariant,
+                    variant: variantString,
                     qty: qty
                 });
             }
 
-            // Animación visual de añadido (opcional)
             const btn = document.querySelector(`button[onclick="addToCart(${id})"]`);
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i>`;
@@ -464,7 +452,6 @@
             const phone = document.getElementById('customer-phone').value;
             const address = document.getElementById('customer-address').value;
 
-            // Construir Mensaje
             let message = `*NUEVO PEDIDO - ${storeConfig.name}*\n\n`;
             message += `*Cliente:* ${name}\n`;
             message += `*Tel:* ${phone}\n`;
@@ -480,7 +467,6 @@
 
             message += `\n*TOTAL: $ ${total.toLocaleString('es-MX', {minimumFractionDigits: 2})} ${storeConfig.currency}*`;
 
-            // Codificar y enviar
             const encodedMsg = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/${storeConfig.prefix}${storeConfig.phone}?text=${encodedMsg}`;
             
