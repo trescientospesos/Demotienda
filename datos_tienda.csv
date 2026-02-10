@@ -1,5 +1,5 @@
 Tienda_Nombre,Tienda_Descripcion,Tienda_Telefono,Tienda_Prefijo,Tienda_Moneda,Tienda_Color_1,Tienda_Color_2,Prod_Categoria,Prod_Nombre,Prod_Descripcion,Prod_Precio,Var1_Titulo,Var1_Opciones,Var1_Fotos,Var2_Titulo,Var2_Opciones,Prod_Imagen,
-Mi Tienda Pro,Envíos a todo el país en 24h,1234567890,52,MXN,#2563eb,#1e40af,Ropa,Camiseta Básica Premium,Algodón 100% orgánico.,350.00,Color,Blanca;Lila,camiseta_blanca1.png;camiseta_lila.png,Talla,S;M;L;XL,camiseta_blanca1.png;camiseta_lila.png,
+Mi Tienda Pro,Envíos a todo el país en 24h,1234567890,52,MXN,#2563eb,#1e40af,Ropa,Camiseta Básica Premium,Algodón 100% orgánico.,350.00,Color,Blanca;Lila,camiseta_blanca1.png;camiseta_lila1.png,Talla,S;M;L;XL,camiseta_blanca1.png;camiseta_lila1.png,
 ,,,,,,,Ropa,Jeans Slim Fit,Mezclilla elástica.,890.00,Color,Azul Claro;Azul Oscuro,jeans_claro.jpg;jeans_oscuro.jpg,Talla,28;30;32;34,jeans_claro.jpg,
 ,,,,,,,Ropa,Sudadera con Capucha,Ideal para clima fresco.,650.00,Color,Gris;Rojo,sudadera_gris.jpg;sudadera_roja.jpg,Talla,S;M;L;XL,sudadera_gris.jpg,
 ,,,,,,,Ropa,Chaqueta de Cuero,Estilo motociclista.,1200.00,Talla,S;M;L;XL,,,,,chaqueta_cuero.jpg
@@ -22,4 +22,5 @@ Mi Tienda Pro,Envíos a todo el país en 24h,1234567890,52,MXN,#2563eb,#1e40af,R
 ,,,,,,,Accesorios,Mochila Antirrobo,Cierres ocultos.,650.00,Color,Gris;Negro;Azul Marino,,,,mochila.jpg,
 ,,,,,,,Accesorios,Cinturón de Cuero,Hebilla metálica.,300.00,Color,Negro;Café,,Talla,30;32;34;36,cinturon.jpg,
 ,,,,,,,Accesorios,Gorra Deportiva,Tela transpirable.,250.00,Color,Negro;Blanco;Azul,,,,gorra.jpg,
+
 ,,,,,,,Accesorios,Cartera Billetera,Bloqueo RFID.,400.00,Color,Negro;Café,,,,cartera.jpg,
